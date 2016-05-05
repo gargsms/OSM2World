@@ -166,18 +166,20 @@ public class CustomBinaryTarget extends PrimitiveTarget<RenderableToAllTargets> 
 			current = vertexIndices;
 		}
 
+		//TODO optimize this later. We are wasting 8 bytes per recursive call
+		//1 for type, 1 for count, and 6 for the Colour info
 		switch (type) {
 		case TRIANGLES:
-			writeBlockHeader(TRIANGLES, current.size());
+			writeBlockHeader(TRIANGLES, 1);
 			break;
 		case TRIANGLE_STRIP:
-			writeBlockHeader(TRIANGLE_STRIP, current.size());
+			writeBlockHeader(TRIANGLE_STRIP, 1);
 			break;
 		case TRIANGLE_FAN:
-			writeBlockHeader(TRIANGLE_FAN, current.size());
+			writeBlockHeader(TRIANGLE_FAN, 1);
 			break;
 		case CONVEX_POLYGON:
-			writeBlockHeader(CONVEX_POLYGON, current.size());
+			writeBlockHeader(CONVEX_POLYGON, 1);
 			break;
 		}
 
