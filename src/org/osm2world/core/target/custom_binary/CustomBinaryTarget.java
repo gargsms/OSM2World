@@ -3,6 +3,9 @@ package org.osm2world.core.target.custom_binary;
 import static java.lang.Math.round;
 import static org.osm2world.core.target.custom_binary.EntryType.TRIANGLES;
 import static org.osm2world.core.target.custom_binary.EntryType.VECTOR3;
+import static org.osm2world.core.target.custom_binary.EntryType.TRIANGLE_STRIP;
+import static org.osm2world.core.target.custom_binary.EntryType.TRIANGLE_FAN;
+import static org.osm2world.core.target.custom_binary.EntryType.CONVEX_POLYGON;
 import gnu.trove.map.TObjectIntMap;
 import gnu.trove.map.hash.TObjectIntHashMap;
 
@@ -49,17 +52,13 @@ public class CustomBinaryTarget extends PrimitiveTarget<RenderableToAllTargets> 
 
 		try {
 
-			//TODO check for maximum size of 256 indices per call
+			// The maximum count limit of 255 is handled by the write functions
 
-			if (type == Type.TRIANGLES) {
+			List<Integer> indices = vector3sToIndices(vs);
 
-				int[] indices = vector3sToIndices(vs);
+			writeVectors(unwrittenVector3s);
 
-				writeVectors();
-
-				writeTriangles(material, indices);
-
-			}
+			writePrimitive(type, material, indices);
 
 		} catch (IOException e) {
 			//TODO exception handling
@@ -84,14 +83,14 @@ public class CustomBinaryTarget extends PrimitiveTarget<RenderableToAllTargets> 
 		};
 	}
 
-	private int[] vector3sToIndices(List<? extends VectorXYZ> vs) {
+	private List<Integer> vector3sToIndices(List<? extends VectorXYZ> vs) {
 		return vectorsToIndices(vector3IndexMap, unwrittenVector3s, vs);
 	}
 
-	private static <V> int[] vectorsToIndices(TObjectIntMap<V> indexMap,
+	private static <V> List<Integer> vectorsToIndices(TObjectIntMap<V> indexMap,
 			List<V> unwrittenList, List<? extends V> vectors) {
 
-		int[] indices = new int[vectors.size()];
+		List<Integer> indices = new ArrayList<Integer>();
 
 		for (int i=0; i<vectors.size(); i++) {
 
@@ -107,7 +106,7 @@ public class CustomBinaryTarget extends PrimitiveTarget<RenderableToAllTargets> 
 				indexMap.put(v, index);
 			}
 
-			indices[i] = index;
+			indices.add(i, index);
 
 		}
 
@@ -119,20 +118,26 @@ public class CustomBinaryTarget extends PrimitiveTarget<RenderableToAllTargets> 
 
 		outputStream.writeByte(e.id);
 		outputStream.writeByte(size);
-		
-//		offset += 2;
 
 	}
 
-	private void writeVectors() throws IOException {
+	private void writeVectors(List<VectorXYZ> vectors) throws IOException {
 
-		List<VectorXYZ> vectors = unwrittenVector3s;
+		List<VectorXYZ> current, remaining = null;
 
-		writeBlockHeader(VECTOR3, vectors.size());
+		// We can only have a block of 255 vertices at once
+		if( vectors.size() > 255 ) {
+			current = vectors.subList(0, 255);
+			remaining = vectors.subList(255, vectors.size());
+		} else {
+			current = vectors;
+		}
+
+		writeBlockHeader(VECTOR3, current.size());
 
 		int x, y, z;
 		
-		for (VectorXYZ v : vectors) {
+		for (VectorXYZ v : current) {
 			x = (int)round(v.x*1000);
 			y = (int)round(v.y*1000);
 			z = (int)round(v.z*1000);
@@ -144,13 +149,37 @@ public class CustomBinaryTarget extends PrimitiveTarget<RenderableToAllTargets> 
 			outputStream.write(intTo24ByteArrayLE(z));
 		}
 
-		unwrittenVector3s.clear();
+		if(remaining != null) {
+			writeVectors(remaining);
+		}
 
 	}
 
-	private void writeTriangles(Material material, int[] vertexIndices) throws IOException {
+	private void writePrimitive(Type type, Material material, List<Integer> vertexIndices) throws IOException {
 
-		writeBlockHeader(TRIANGLES, 1);
+		List<Integer> current, remaining = null;
+
+		if(vertexIndices.size() > 255) {
+			current = vertexIndices.subList(0, 255);
+			remaining = vertexIndices.subList(255, vertexIndices.size());
+		} else {
+			current = vertexIndices;
+		}
+
+		switch (type) {
+		case TRIANGLES:
+			writeBlockHeader(TRIANGLES, current.size());
+			break;
+		case TRIANGLE_STRIP:
+			writeBlockHeader(TRIANGLE_STRIP, current.size());
+			break;
+		case TRIANGLE_FAN:
+			writeBlockHeader(TRIANGLE_FAN, current.size());
+			break;
+		case CONVEX_POLYGON:
+			writeBlockHeader(CONVEX_POLYGON, current.size());
+			break;
+		}
 
 		outputStream.writeByte(material.ambientColor().getRed());
 		outputStream.writeByte(material.ambientColor().getGreen());
@@ -158,10 +187,14 @@ public class CustomBinaryTarget extends PrimitiveTarget<RenderableToAllTargets> 
 		outputStream.writeByte(material.diffuseColor().getRed());
 		outputStream.writeByte(material.diffuseColor().getGreen());
 		outputStream.writeByte(material.diffuseColor().getBlue());
-		outputStream.writeByte(vertexIndices.length);
+		outputStream.writeByte(current.size());
 
-		for (int i=0; i < vertexIndices.length; i++) {
-			outputStream.write(intTo16ByteArrayLE(vertexIndices[i]));
+		for (int i=0; i < current.size(); i++) {
+			outputStream.write(intTo16ByteArrayLE(current.get(i)));
+		}
+
+		if(remaining != null) {
+			writePrimitive(type, material, remaining);
 		}
 
 	}
