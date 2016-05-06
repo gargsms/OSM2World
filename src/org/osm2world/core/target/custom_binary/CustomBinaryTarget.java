@@ -60,6 +60,8 @@ public class CustomBinaryTarget extends PrimitiveTarget<RenderableToAllTargets> 
 
 			writePrimitive(type, material, indices);
 
+			unwrittenVector3s.clear();
+
 		} catch (IOException e) {
 			//TODO exception handling
 		}
