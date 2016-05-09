@@ -183,6 +183,8 @@ public class CustomBinaryTarget extends PrimitiveTarget<RenderableToAllTargets> 
 		case CONVEX_POLYGON:
 			writeBlockHeader(CONVEX_POLYGON, 1);
 			break;
+		default:
+			System.out.println(type);
 		}
 
 		outputStream.writeByte(material.ambientColor().getRed());

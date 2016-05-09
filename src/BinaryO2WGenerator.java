@@ -14,6 +14,11 @@ import org.osm2world.core.target.Target;
 import org.osm2world.core.target.custom_binary.CustomBinaryTarget;
 import org.osm2world.core.world.creation.WorldModule;
 import org.osm2world.core.world.modules.BuildingModule;
+import org.osm2world.core.world.modules.TreeModule;
+import org.osm2world.core.world.modules.RoadModule;
+import org.osm2world.core.world.modules.RailwayModule;
+import org.osm2world.core.world.modules.SurfaceAreaModule;
+import org.osm2world.core.world.modules.WaterModule;
 
 import com.google.common.io.LittleEndianDataOutputStream;
 
@@ -30,10 +35,15 @@ public class BinaryO2WGenerator {
 		ConversionFacade facade = new ConversionFacade();
 
 		Configuration config = new BaseConfiguration();
-		config.addProperty("createTerrain", "false");
+		config.addProperty("createTerrain", "true");
 
 		List<WorldModule> worldModules = new ArrayList<>();
 		worldModules.add(new BuildingModule());
+		worldModules.add(new TreeModule());
+		worldModules.add(new RailwayModule());
+		worldModules.add(new RoadModule());
+		worldModules.add(new SurfaceAreaModule());
+		worldModules.add(new WaterModule());
 
 		facade.createRepresentations(new File(args[0]),
 				worldModules, config, Arrays.<Target<?>>asList(target));
