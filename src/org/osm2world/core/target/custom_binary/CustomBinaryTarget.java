@@ -140,9 +140,9 @@ public class CustomBinaryTarget extends PrimitiveTarget<RenderableToAllTargets> 
 		int x, y, z;
 		
 		for (VectorXYZ v : current) {
-			x = (int)round(v.x*1000);
-			y = (int)round(v.y*1000);
-			z = (int)round(v.z*1000);
+			x = (int)round(v.x);
+			y = (int)round(v.y);
+			z = (int)round(v.z);
 			
 			// The Guava documentation is misleading here
 			// Specifying an offset and length throws an IndexOutOfBoundsException
