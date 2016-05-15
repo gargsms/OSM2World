@@ -187,9 +187,10 @@ public class CustomBinaryTarget extends PrimitiveTarget<RenderableToAllTargets> 
 			System.out.println(type);
 		}
 
-		outputStream.writeByte(material.ambientColor().getRed());
-		outputStream.writeByte(material.ambientColor().getGreen());
-		outputStream.writeByte(material.ambientColor().getBlue());
+		// The client does not support ambient material colors, so we don't write them in the tiles
+		// outputStream.writeByte(material.ambientColor().getRed());
+		// outputStream.writeByte(material.ambientColor().getGreen());
+		// outputStream.writeByte(material.ambientColor().getBlue());
 		outputStream.writeByte(material.diffuseColor().getRed());
 		outputStream.writeByte(material.diffuseColor().getGreen());
 		outputStream.writeByte(material.diffuseColor().getBlue());
