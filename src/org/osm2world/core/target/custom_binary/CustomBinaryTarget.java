@@ -168,8 +168,8 @@ public class CustomBinaryTarget extends PrimitiveTarget<RenderableToAllTargets> 
 			current = vertexIndices;
 		}
 
-		//TODO optimize this later. We are wasting 8 bytes per recursive call
-		//1 for type, 1 for count, and 6 for the Colour info
+		//TODO optimize this later. We are wasting 5 bytes per recursive call
+		//1 for type, 1 for count, and 3 for the Colour info
 		switch (type) {
 		case TRIANGLES:
 			writeBlockHeader(TRIANGLES, 1);
@@ -194,10 +194,77 @@ public class CustomBinaryTarget extends PrimitiveTarget<RenderableToAllTargets> 
 		outputStream.writeByte(material.diffuseColor().getRed());
 		outputStream.writeByte(material.diffuseColor().getGreen());
 		outputStream.writeByte(material.diffuseColor().getBlue());
-		outputStream.writeByte(current.size());
 
-		for (int i=0; i < current.size(); i++) {
-			outputStream.write(intTo16ByteArrayLE(current.get(i)));
+		// We need to remove degenerate primitives
+		// This is absolutely useless information
+		if(type == Type.TRIANGLES) {
+			outputStream.writeByte(current.size());
+
+			for (int i=0; i < current.size(); i++) {
+				outputStream.write(intTo16ByteArrayLE(current.get(i)));
+			}
+		} else if(type == Type.TRIANGLE_STRIP){
+			int size = current.size();
+			int a, b, c;
+			List<Integer> goodIndices = new ArrayList<Integer>();
+			boolean skip = false;
+
+			for(int i = 0; i < size - 2; i++) {
+				a = current.get(i);
+				b = current.get(i+1);
+				c = current.get(i+2);
+				if(a==b || b==c || c==a) {
+					skip = false;
+					continue;
+				} else {
+					if(skip) {
+						goodIndices.add(c);
+					} else {
+						goodIndices.add(a);
+						goodIndices.add(b);
+						goodIndices.add(c);
+						skip = true;
+					}
+				}
+			}
+
+			size = goodIndices.size();
+			outputStream.writeByte(size);
+
+			for(int i = 0; i < size; i++) {
+				outputStream.write(intTo16ByteArrayLE(goodIndices.get(i)));
+			}
+
+		} else if(type == Type.TRIANGLE_FAN || type == Type.CONVEX_POLYGON) {
+			int size = current.size();
+			int a = current.get(0), b, c;
+			List<Integer> goodIndices = new ArrayList<Integer>();
+			goodIndices.add(a);
+			boolean skip = false;
+
+			for(int i = 1; i < size - 1; i++) {
+				b = current.get(i);
+				c = current.get(i+1);
+				if(a==b || b==c || c==a) {
+					skip = false;
+					continue;
+				} else {
+					if(skip) {
+						goodIndices.add(c);
+					} else {
+						goodIndices.add(b);
+						goodIndices.add(c);
+						skip = true;
+					}
+				}
+			}
+
+			size = goodIndices.size();
+			outputStream.writeByte(size);
+
+			for(int i = 0; i < size; i++) {
+				outputStream.write(intTo16ByteArrayLE(goodIndices.get(i)));
+			}
 		}
 
 		if(remaining != null) {
