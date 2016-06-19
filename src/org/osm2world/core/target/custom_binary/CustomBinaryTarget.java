@@ -6,6 +6,7 @@ import static org.osm2world.core.target.custom_binary.EntryType.VECTOR3;
 import static org.osm2world.core.target.custom_binary.EntryType.TRIANGLE_STRIP;
 import static org.osm2world.core.target.custom_binary.EntryType.TRIANGLE_FAN;
 import static org.osm2world.core.target.custom_binary.EntryType.CONVEX_POLYGON;
+import static org.osm2world.core.target.custom_binary.EntryType.TREE;
 import gnu.trove.map.TObjectIntMap;
 import gnu.trove.map.hash.TObjectIntHashMap;
 
@@ -62,6 +63,16 @@ public class CustomBinaryTarget extends PrimitiveTarget<RenderableToAllTargets> 
 
 			unwrittenVector3s.clear();
 
+		} catch (IOException e) {
+			//TODO exception handling
+		}
+
+	}
+
+	public void drawPrimitiveTree(VectorXYZ pos, double height, boolean coniferous) {
+
+		try {
+			writePrimitiveTree(pos, height, coniferous);
 		} catch (IOException e) {
 			//TODO exception handling
 		}
@@ -270,6 +281,17 @@ public class CustomBinaryTarget extends PrimitiveTarget<RenderableToAllTargets> 
 		if(remaining != null) {
 			writePrimitive(type, material, remaining);
 		}
+
+	}
+
+	private void writePrimitiveTree(VectorXYZ pos, double height, boolean coniferous) throws IOException {
+
+		outputStream.writeByte(TREE.id);
+		outputStream.writeByte(coniferous ? 1 : 0);
+		outputStream.write(intTo24ByteArrayLE((int)round(pos.x*1000)));
+		outputStream.write(intTo24ByteArrayLE((int)round(pos.y*1000)));
+		outputStream.write(intTo24ByteArrayLE((int)round(pos.z*1000)));
+		outputStream.write(intTo16ByteArrayLE((int)round(height*1000)));
 
 	}
 

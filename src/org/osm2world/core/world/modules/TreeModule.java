@@ -40,6 +40,8 @@ import org.osm2world.core.world.data.WorldObject;
 import org.osm2world.core.world.modules.common.ConfigurableWorldModule;
 import org.osm2world.core.world.modules.common.WorldModuleBillboardUtil;
 
+import org.osm2world.core.target.custom_binary.CustomBinaryTarget;
+
 /**
  * adds trees, tree rows, tree groups and forests to the world
  */
@@ -193,24 +195,32 @@ public class TreeModule extends ConfigurableWorldModule {
 		
 		double height = getTreeHeight(element, leafType == LeafType.NEEDLELEAVED, species != null);
 		
-		if (useBillboards) {
-			
-			//"random" decision based on x coord
-			boolean mirrored = (long)(pos.getX()) % 2 == 0;
-			
-			Material material = species == TreeSpecies.APPLE_TREE
-					? Materials.TREE_BILLBOARD_BROAD_LEAVED_FRUIT
-					: leafType == LeafType.NEEDLELEAVED
-					? Materials.TREE_BILLBOARD_CONIFEROUS
-					: Materials.TREE_BILLBOARD_BROAD_LEAVED;
-			
-			WorldModuleBillboardUtil.renderCrosstree(target, material, pos,
-					(species != null ? 1.0 : 0.5 ) * height, height, mirrored);
-			
+		boolean isToBeConsideredPrimitive = target instanceof CustomBinaryTarget;
+
+		if(isToBeConsideredPrimitive) {
+
+			renderPrimitiveTree((CustomBinaryTarget) target, pos, leafType, height);
+
 		} else {
-			
-			renderTreeGeometry(target, pos, leafType, height);
-			
+			if (useBillboards) {
+
+				//"random" decision based on x coord
+				boolean mirrored = (long)(pos.getX()) % 2 == 0;
+
+				Material material = species == TreeSpecies.APPLE_TREE
+						? Materials.TREE_BILLBOARD_BROAD_LEAVED_FRUIT
+						: leafType == LeafType.NEEDLELEAVED
+						? Materials.TREE_BILLBOARD_CONIFEROUS
+						: Materials.TREE_BILLBOARD_BROAD_LEAVED;
+
+				WorldModuleBillboardUtil.renderCrosstree(target, material, pos,
+						(species != null ? 1.0 : 0.5 ) * height, height, mirrored);
+
+			} else {
+
+				renderTreeGeometry(target, pos, leafType, height);
+
+			}
 		}
 		
 	}
@@ -235,6 +245,15 @@ public class TreeModule extends ConfigurableWorldModule {
 				true, true);
 	}
 	
+	private static void renderPrimitiveTree(CustomBinaryTarget target,
+			VectorXYZ pos, LeafType leafType, double height) {
+
+		boolean coniferous = (leafType == LeafType.NEEDLELEAVED);
+
+		target.drawPrimitiveTree(pos, height, coniferous);
+
+	}
+
 	/**
 	 * parse height (for forests, add some random factor)
 	 */

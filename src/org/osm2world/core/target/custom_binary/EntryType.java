@@ -6,7 +6,8 @@ public enum EntryType {
 	TRIANGLES((short)11),
 	TRIANGLE_STRIP((short)12),
 	TRIANGLE_FAN((short)13),
-	CONVEX_POLYGON((short)14);
+	CONVEX_POLYGON((short)14),
+	TREE((short)18);
 
 	public final short id;
 
